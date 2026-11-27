@@ -8,7 +8,8 @@ Install Docker with Compose and start its engine. From the repository root, run 
 
 ```powershell
 .\scripts\Initialize-Local.ps1
-docker compose up --build -d --wait
+docker compose build --pull
+docker compose up -d --wait
 ```
 
 Open **http://localhost:5180**. Sign in with `VERIFI_DEMO_EMAIL` and `VERIFI_DEMO_PASSWORD` from the git-ignored `.env` next to this file. The initialization script generates different random passwords for the database and the local user. It preserves an existing `.env`. Alternatively, copy `.env.example` to `.env` and supply your own unique credentials. Choose a demo password between 12 and 72 UTF-8 bytes. On first startup Spring provisions the demo account, company, and package assignments when both the local profile and demo setting are enabled. Changing the password in the file does not change an existing account.
