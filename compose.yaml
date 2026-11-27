@@ -1,0 +1,53 @@
+name: verifi
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: verifi
+      POSTGRES_USER: verifi
+      POSTGRES_PASSWORD: ${VERIFI_DB_PASSWORD:?Set VERIFI_DB_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${VERIFI_DB_PORT:-55432}:5432"
+    volumes:
+      - portal-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verifi -d verifi"]
+      interval: 3s
+      timeout: 3s
+      retries: 25
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      VERIFI_DB_URL: jdbc:postgresql://db:5432/verifi
+      VERIFI_DB_USER: verifi
+      VERIFI_DB_PASSWORD: ${VERIFI_DB_PASSWORD}
+      VERIFI_DEMO_ENABLED: ${VERIFI_DEMO_ENABLED:-false}
+      VERIFI_DEMO_EMAIL: ${VERIFI_DEMO_EMAIL:-}
+      VERIFI_DEMO_PASSWORD: ${VERIFI_DEMO_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/actuator/health"]
+      interval: 5s
+      timeout: 4s
+      retries: 24
+      start_period: 25s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${VERIFI_WEB_PORT:-5180}:8080"
+
+volumes:
+  portal-data:
